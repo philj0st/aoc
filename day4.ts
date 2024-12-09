@@ -31,7 +31,7 @@ class Matrix extends Array {
     return this[y]?.[x]
   }
 
-  dimensions: { x: number, y: number } 
+  dimensions: { x: number, y: number }
 
   diagDown = (x: number, y: number) => this.walk(x, y, 1, 1)()
   diagUp = (x: number, y: number) => this.walk(x, y, 1, -1)()
@@ -40,15 +40,20 @@ class Matrix extends Array {
 
   directions = [this.diagUp, this.right, this.diagDown, this.down]
 
+  allCoords = () => range(0, this.dimensions.x)
+    .flatMap(x => range(0, this.dimensions.y)
+      .map(y => [x, y]))
+
+
   private isInBounds(x: number, y: number): boolean {
     return x >= 0 && x < this.dimensions.x && y >= 0 && y < this.dimensions.y
   }
 
   private walk(startX: number, startY: number, dx: number, dy: number) {
-    return function* (this: Matrix) {
+    return function*(this: Matrix) {
       let x = startX
       let y = startY
-      while (true) { 
+      while (true) {
         if (!this.isInBounds(x + dx, y + dy)) {
           return this.at(x, y)
         } else {
@@ -81,21 +86,30 @@ assertEquals(xmas.join(''), "XMAS")
 
 const reversed = keyword.split('').reverse().join('')
 
-const countKeywords = (matrix: Matrix) => 
+const countKeywords = (matrix: Matrix) =>
   range(0, matrix.dimensions.x)
-  .flatMap(x => range(0, matrix.dimensions.y)
-    .flatMap(y => 
-      matrix.directions.flatMap(direction => take(keyword.length, direction(x,y)).join(''))
-    ))
-.filter(word => word === keyword || word === reversed)
+    .flatMap(x => range(0, matrix.dimensions.y)
+      .flatMap(y =>
+        matrix.directions.flatMap(direction => take(keyword.length, direction(x, y)).join(''))
+      ))
+    .filter(word => word === keyword || word === reversed)
 
 const input = await Deno.readTextFile('day4.txt')
-
-console.log(countKeywords(new Matrix(...parse(input))).length)
+const inputMatrix = new Matrix(...parse(input))
+console.log(countKeywords(inputMatrix).length)
 
 // part two
-// Generator for the shape
+// 
 // X0X
 // 0X0
 // X0X
+
+const crossAt = (x: number, y: number) =>
+  take(3, inputMatrix.diagDown(x, y))
+    .concat(take(3, inputMatrix.diagUp(x, y + 2)))
+
+const keycrosses = [`MASMAS`, `SAMMAS`, `MASSAM`, `SAMSAM`]
+
+const countKeycrosses = inputMatrix.allCoords().map(([x, y]) => crossAt(x, y)).filter(it => keycrosses.includes(it.join(''))).length
+console.log(countKeycrosses)
 
